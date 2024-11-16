@@ -63,7 +63,22 @@ class EnemyTank:
         elif direction == 'right' and self.x < SCREEN_WIDTH - self.width:
             self.x += self.speed
 
-    def move_towards_player(self, player_x, player_y):
+    def move_towards_player(self, player_x, player_y, enemy_tanks):
+        # Avoid collision with other enemy tanks
+        for enemy in enemy_tanks:
+            if enemy != self: # Don't check collision with itself
+                if abs(self.x - enemy.x) < 100 and abs(self.y - enemy.y) < 100:
+                    if self.x < enemy.x:
+                        self.x -= self.speed # move left
+                    elif self.x > enemy.x:
+                        self.x += self.speed # move right
+                
+                    if self.y < enemy.y:
+                        self.y -= self.speed # move up
+                    elif self.y > enemy.y:
+                        self.y += self.speed # move down
+                    return # exit if avoiding another empty tank
+
         if self.x < player_x:
             self.x += self.speed
         elif self.x > player_x:
@@ -102,8 +117,8 @@ def main():
 
         # Move and draw each enemy tank
         for enemy in enemy_tanks:
-            enemy.move_randomly()
-            # enemy.move_towards_player(player_tank.x, player_tank.y)
+            # enemy.move_randomly()
+            enemy.move_towards_player(player_tank.x, player_tank.y, enemy_tanks)
             enemy.draw()
 
         # Draw player tank
