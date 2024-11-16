@@ -34,6 +34,7 @@ class PlayerTank:
         self.bullets = []
         self.last_shot_time = 0
         self.shoot_delay = 500
+        self.health = 3
 
     def move(self, keys):
         if keys[pygame.K_UP] and self.y > 0:
@@ -62,6 +63,16 @@ class PlayerTank:
             bullet.move()
             bullet.draw()
 
+
+    def check_enemy_bullet_collisions(self, enemy_tanks):
+        for enemy in enemy_tanks[:]:
+            for bullet in enemy.bullets[:]:
+                if bullet.collide_with_tank(self):
+                    self.health -= 1
+                    enemy.bullets.remove(bullet)
+                    if self.health <= 0:
+                        print("Player Tank Destroyed")
+
     def check_bullet_out_of_bounds(self):
         self.bullets = [bullet for bullet in self.bullets if 
                         0 <= bullet.x <= SCREEN_WIDTH and 
@@ -75,6 +86,7 @@ class EnemyTank:
         self.height = TANK_HEIGHT
         self.color = ENEMY_COLOR
         self.speed = 3 # slower than the player
+        self.health = 1
         self.direction = 'down'
         self.bullets = []
 
@@ -132,6 +144,15 @@ class EnemyTank:
             bullet.move()
             bullet.draw()
 
+    def check_player_bullet_collisions(self, player_tank, enemy_tanks):
+        for bullet in player_tank.bullets[:]:
+            if bullet.collide_with_tank(self):
+                self.health -= 1
+                player_tank.bullets.remove(bullet)
+                if self.health <= 0:
+                    enemy_tanks.remove(self)
+                    pass
+
     def check_bullet_out_of_bounds(self):
         self.bullets = [bullet for bullet in self.bullets if
                         0 <= bullet.x <= SCREEN_WIDTH 
@@ -160,6 +181,12 @@ class Bullet:
     def draw(self):
         pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))    
 
+    def collide_with_tank(self, tank):
+        tank_rect = pygame.Rect(tank.x, tank.y, tank.width, tank.height)
+        bullet_rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        return tank_rect.colliderect(bullet_rect)
+
+
 # Main game loop
 def main():
     clock = pygame.time.Clock()
@@ -182,8 +209,13 @@ def main():
         keys = pygame.key.get_pressed()
         player_tank.move(keys)
 
+        # Draw player tank
+        player_tank.draw()
+
         if keys[pygame.K_SPACE]:
             player_tank.shoot()
+
+        player_tank.check_enemy_bullet_collisions(enemy_tanks)
 
         # Move and draw each enemy tank
         for enemy in enemy_tanks:
@@ -192,9 +224,10 @@ def main():
             enemy.move_locally(player_tank.x, player_tank.y, enemy_tanks)  
             enemy.shoot()     
             enemy.draw()
+            enemy.check_player_bullet_collisions(player_tank, enemy_tanks)
 
-        # Draw player tank
-        player_tank.draw()
+        
+
 
         # Remove bullets that are out of bounds
         player_tank.check_bullet_out_of_bounds()
