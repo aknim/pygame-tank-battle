@@ -88,6 +88,12 @@ class EnemyTank:
             self.y += self.speed
         elif self.y > player_y:
             self.y -= self.speed
+
+    def move_locally(self, player_x, player_y, enemy_tanks):
+        if abs(self.x - player_x) < 150 and abs(self.y - player_y) < 150:
+            self.move_towards_player(player_x, player_y, enemy_tanks)
+        else:
+            self.move_randomly()
         
     def draw(self):
         pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))
@@ -118,7 +124,8 @@ def main():
         # Move and draw each enemy tank
         for enemy in enemy_tanks:
             # enemy.move_randomly()
-            enemy.move_towards_player(player_tank.x, player_tank.y, enemy_tanks)
+            # enemy.move_towards_player(player_tank.x, player_tank.y, enemy_tanks)
+            enemy.move_locally(player_tank.x, player_tank.y, enemy_tanks)       
             enemy.draw()
 
         # Draw player tank
