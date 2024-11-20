@@ -14,8 +14,12 @@ TANK_COLOR = (0, 255, 0) # Green
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0) # Red
+YELLOW = (255, 255, 0) # Yellow
+BLUE = (0, 0, 255) # Blue
 
 ENEMY_COUNT = 5
+
+ENEMY_TYPES = ['normal', 'fast', 'strong']
 
 # Create the game screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -82,16 +86,25 @@ class PlayerTank:
                         0 <= bullet.y <= SCREEN_HEIGHT]
 
 class EnemyTank:
-    def __init__(self, x, y):
+    def __init__(self, x, y, enemy_type='normal'):
         self.x = x
         self.y = y
         self.width = TANK_WIDTH
         self.height = TANK_HEIGHT
         self.color = RED
         self.speed = 3 # slower than the player
-        self.health = 1
+        self.health = 3
         self.direction = 'down'
         self.bullets = []
+
+        if enemy_type == 'fast':
+            self.speed = 5
+            self.health = 1
+            self.color = YELLOW # yellow for fast enemies
+        elif enemy_type == 'strong':
+            self.speed = 2
+            self.health = 5
+            self.color = BLUE # blue for strong enemies
 
     def shoot(self):
         if random.randint(1, 60) == 1:
@@ -204,8 +217,9 @@ def main():
     clock = pygame.time.Clock()
     player_tank = PlayerTank(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
 
-    enemy_tanks = [EnemyTank(random.randint(0, SCREEN_WIDTH - TANK_WIDTH), 
-                            random.randint(0, SCREEN_HEIGHT - TANK_HEIGHT)) 
+    enemy_tanks = [EnemyTank(random.randint(0, SCREEN_WIDTH - TANK_WIDTH,), 
+                            random.randint(0, SCREEN_HEIGHT - TANK_HEIGHT), 
+                            ENEMY_TYPES[random.randint(0, 3)]) 
                             for _ in range(ENEMY_COUNT)]
 
     running = True
