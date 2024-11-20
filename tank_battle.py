@@ -10,16 +10,19 @@ SCREEN_HEIGHT = 600
 TANK_WIDTH = 40
 TANK_HEIGHT = 40
 
-TANK_COLOR = (0, 255, 0) # Green
+GREEN= (0, 255, 0) # Green
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0) # Red
 YELLOW = (255, 255, 0) # Yellow
 BLUE = (0, 0, 255) # Blue
+ORANGE = (255, 165, 0)
+PURPLE = (128, 0, 128)
 
 ENEMY_COUNT = 5
 
 ENEMY_TYPES = ['normal', 'fast', 'strong']
+
 
 # Create the game screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -28,6 +31,24 @@ pygame.display.set_caption("Tank Battle")
 pygame.font.init()
 font = pygame.font.SysFont('Arial', 30)
 
+
+class PowerUp:
+    def __init__(self, x, y, power_type):
+        self.x = x
+        self.y = y
+        self.width = 20
+        self.height = 20
+        self.power_type = power_type # 'health' or 'speed'
+        self.color = PURPLE if power_type == 'health' else ORANGE 
+
+    def draw(self):
+        pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))
+    
+    def collide_with_players(self, player):
+        power_rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        player_rect = pygame.Rect(player.x, player.y, player.width, player.height)
+        return power_rect.colliderect(player_rect)
+
 # Define the Player Tank class
 class PlayerTank:
     def __init__(self, x, y):
@@ -35,7 +56,7 @@ class PlayerTank:
         self.y = y
         self.width = TANK_WIDTH
         self.height = TANK_HEIGHT
-        self.color = TANK_COLOR
+        self.color = GREEN
         self.speed = 5
         self.direction = 'up'
         self.bullets = []
@@ -211,6 +232,15 @@ def display_game_over():
     game_over_text = font.render('Game Over!', True, RED)
     screen.blit(game_over_text, (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2))
 
+def check_power_up_collisions(player, power_ups):
+    for power_up in power_ups:
+        if power_up.collide_with_players(player):
+            if power_up.power_type == 'health':
+                player.health = min(player.health + 1, 3) # Max health is 3
+            elif power_up.power_type == 'speed':
+                player.speed = 10 # Temprorily increase speed
+                pygame.time.set_timer(pygame.USEREVENT + 1, 5000) # Reset speed after 5 seconds
+            power_ups.remove(power_up)
 
 # Main game loop
 def main():
@@ -219,8 +249,11 @@ def main():
 
     enemy_tanks = [EnemyTank(random.randint(0, SCREEN_WIDTH - TANK_WIDTH,), 
                             random.randint(0, SCREEN_HEIGHT - TANK_HEIGHT), 
-                            ENEMY_TYPES[random.randint(0, 3)]) 
+                            ENEMY_TYPES[random.randint(0, 2)]) 
                             for _ in range(ENEMY_COUNT)]
+    
+    power_ups =  [PowerUp(150, 150, 'health'),
+                    PowerUp(400, 400, 'speed')]
 
     running = True
     while running:
@@ -230,6 +263,8 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type == pygame.USEREVENT + 1: #Speed reset vent
+                player_tank.speed = 5 # Reset to default speed
 
         # Check for player input
         keys = pygame.key.get_pressed()
@@ -237,6 +272,11 @@ def main():
 
         # Draw player tank
         player_tank.draw()
+
+        # Draw and check power-ups
+        for power_up in power_ups:
+            power_up.draw()
+        check_power_up_collisions(player_tank, power_ups)
 
         if keys[pygame.K_SPACE]:
             player_tank.shoot()
