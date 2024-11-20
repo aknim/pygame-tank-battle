@@ -13,13 +13,16 @@ TANK_HEIGHT = 40
 TANK_COLOR = (0, 255, 0) # Green
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-ENEMY_COLOR = (255, 0, 0) # Red
+RED = (255, 0, 0) # Red
 
 ENEMY_COUNT = 5
 
 # Create the game screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Tank Battle")
+
+pygame.font.init()
+font = pygame.font.SysFont('Arial', 30)
 
 # Define the Player Tank class
 class PlayerTank:
@@ -84,7 +87,7 @@ class EnemyTank:
         self.y = y
         self.width = TANK_WIDTH
         self.height = TANK_HEIGHT
-        self.color = ENEMY_COLOR
+        self.color = RED
         self.speed = 3 # slower than the player
         self.health = 1
         self.direction = 'down'
@@ -187,6 +190,15 @@ class Bullet:
         return tank_rect.colliderect(bullet_rect)
 
 
+def display_health(health):
+    health_text = font.render(f'Health: {health}', True, WHITE)
+    screen.blit(health_text, (10, 10))
+
+def display_game_over():
+    game_over_text = font.render('Game Over!', True, RED)
+    screen.blit(game_over_text, (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2))
+
+
 # Main game loop
 def main():
     clock = pygame.time.Clock()
@@ -196,8 +208,8 @@ def main():
                             random.randint(0, SCREEN_HEIGHT - TANK_HEIGHT)) 
                             for _ in range(ENEMY_COUNT)]
 
-
-    while True:
+    running = True
+    while running:
         screen.fill(BLACK)
     
         for event in pygame.event.get():
@@ -226,16 +238,25 @@ def main():
             enemy.draw()
             enemy.check_player_bullet_collisions(player_tank, enemy_tanks)
 
-        
-
 
         # Remove bullets that are out of bounds
         player_tank.check_bullet_out_of_bounds()
         for enemy in enemy_tanks:
             enemy.check_bullet_out_of_bounds()
 
+        display_health(player_tank.health)
+
+        if player_tank.health <= 0:
+            display_game_over()
+            pygame.display.flip()
+            pygame.time.delay(3000)
+            running = False
+
         pygame.display.update()
         clock.tick(60) # 60 frames per second
 
+
 if __name__ == "__main__":
     main()
+
+pygame.quit()
